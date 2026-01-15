@@ -1,0 +1,45 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create module ZIP
+        run: |
+          zip -r psrecaptcha-${{ github.ref_name }}.zip psrecaptcha/ -x "*.DS_Store" "*.git*"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: psrecaptcha-${{ github.ref_name }}.zip
+          body: |
+            # Module Google reCAPTCHA pour PrestaShop 8+
+
+            ## Installation
+
+            1. Téléchargez le fichier `psrecaptcha-${{ github.ref_name }}.zip`
+            2. Dans PrestaShop : **Modules** → **Module Manager** → **Uploader un module**
+            3. Sélectionnez le fichier ZIP téléchargé
+            4. Configurez vos clés API Google reCAPTCHA
+
+            ## Documentation
+
+            Consultez le [README complet](https://github.com/${{ github.repository }}/blob/${{ github.ref_name }}/psrecaptcha/README.md) pour plus d'informations.
+
+            ## Fonctionnalités
+
+            - ✅ Support reCAPTCHA v2, v2 Invisible et v3
+            - ✅ Protection des formulaires (contact, inscription, avis)
+            - ✅ Configuration intuitive
+            - ✅ Compatible PrestaShop 8.0+
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

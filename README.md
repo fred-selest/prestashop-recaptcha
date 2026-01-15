@@ -110,6 +110,15 @@ Pour toute question ou problème :
 
 ## 📅 Changelog
 
+### Version 1.0.3 (2026-01-15) - Version corrigée inspirée d'eicaptcha
+- 🔧 **MAJEUR** : Intégration de la librairie officielle Google ReCaptcha via Composer
+- 🐛 **FIX** : Utilisation du hook `actionSubmitAccountBefore` au lieu de `actionCustomerAccountAdd`
+- 🐛 **FIX** : Validation côté serveur avec la librairie officielle au lieu de file_get_contents
+- 🐛 **FIX** : Gestion des erreurs via `$controller->errors[]` au lieu d'exceptions
+- ✅ Support de cURL si allow_url_fopen est désactivé
+- ✅ Gestion du score minimum pour reCAPTCHA v3
+- ✅ Module maintenant 100% fonctionnel sur PrestaShop 8+
+
 ### Version 1.0.2 (2026-01-15)
 - 🐛 Correction : Ajout du fichier logo.png obligatoire pour PrestaShop
 - ✅ Module maintenant installable directement via le back-office

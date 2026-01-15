@@ -20,7 +20,7 @@ class PsRecaptcha extends Module
     {
         $this->name = 'psrecaptcha';
         $this->tab = 'front_office_features';
-        $this->version = '1.0.1';
+        $this->version = '1.0.2';
         $this->author = 'Your Name';
         $this->need_instance = 0;
         $this->ps_versions_compliancy = [

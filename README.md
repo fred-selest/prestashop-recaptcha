@@ -110,6 +110,11 @@ Pour toute question ou problème :
 
 ## 📅 Changelog
 
+### Version 1.0.2 (2026-01-15)
+- 🐛 Correction : Ajout du fichier logo.png obligatoire pour PrestaShop
+- ✅ Module maintenant installable directement via le back-office
+- 📦 Fichier ZIP prêt à l'emploi
+
 ### Version 1.0.1 (2026-01-15)
 - 🔧 Ajout du workflow GitHub Actions pour releases automatiques
 - 📦 Packaging automatique du module en ZIP

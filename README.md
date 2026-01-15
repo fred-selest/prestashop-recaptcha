@@ -110,6 +110,11 @@ Pour toute question ou problème :
 
 ## 📅 Changelog
 
+### Version 1.0.1 (2026-01-15)
+- 🔧 Ajout du workflow GitHub Actions pour releases automatiques
+- 📦 Packaging automatique du module en ZIP
+- 📚 Documentation améliorée pour les releases
+
 ### Version 1.0.0 (2026-01-15)
 - 🎉 Première version stable
 - ✅ Support reCAPTCHA v2, v2 Invisible et v3

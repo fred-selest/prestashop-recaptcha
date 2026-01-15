@@ -2,7 +2,7 @@
 /**
  * PrestaShop reCAPTCHA Module
  *
- * @author    Your Name
+ * @author    PrestaShop Module
  * @copyright 2024-2026
  * @license   MIT License
  */
@@ -10,6 +10,11 @@
 if (!defined('_PS_VERSION_')) {
     exit;
 }
+
+// Load Composer autoloader for Google reCAPTCHA library
+require_once dirname(__FILE__) . '/vendor/autoload.php';
+
+use ReCaptcha\ReCaptcha;
 
 class PsRecaptcha extends Module
 {
@@ -20,8 +25,8 @@ class PsRecaptcha extends Module
     {
         $this->name = 'psrecaptcha';
         $this->tab = 'front_office_features';
-        $this->version = '1.0.1';
-        $this->author = 'Your Name';
+        $this->version = '1.0.3';
+        $this->author = 'PrestaShop Module';
         $this->need_instance = 0;
         $this->ps_versions_compliancy = [
             'min' => '8.0.0',
@@ -34,6 +39,11 @@ class PsRecaptcha extends Module
         $this->displayName = $this->l('Google reCAPTCHA');
         $this->description = $this->l('Protect your store forms with Google reCAPTCHA v2 and v3');
         $this->confirmUninstall = $this->l('Are you sure you want to uninstall this module?');
+
+        // Warning if not configured
+        if ($this->active && (!Configuration::get('PSRECAPTCHA_SITE_KEY') || !Configuration::get('PSRECAPTCHA_SECRET_KEY'))) {
+            $this->warning = $this->l('reCAPTCHA module needs to be configured with your API keys.');
+        }
     }
 
     /**
@@ -46,7 +56,7 @@ class PsRecaptcha extends Module
             && $this->registerHook('displayCustomerAccountForm')
             && $this->registerHook('displayContactForm')
             && $this->registerHook('actionContactFormSubmitBefore')
-            && $this->registerHook('actionCustomerAccountAdd')
+            && $this->registerHook('actionSubmitAccountBefore')
             && Configuration::updateValue('PSRECAPTCHA_SITE_KEY', '')
             && Configuration::updateValue('PSRECAPTCHA_SECRET_KEY', '')
             && Configuration::updateValue('PSRECAPTCHA_VERSION', 'v2')
@@ -55,7 +65,7 @@ class PsRecaptcha extends Module
             && Configuration::updateValue('PSRECAPTCHA_ENABLED', '0')
             && Configuration::updateValue('PSRECAPTCHA_CONTACT_FORM', '1')
             && Configuration::updateValue('PSRECAPTCHA_CUSTOMER_FORM', '1')
-            && Configuration::updateValue('PSRECAPTCHA_REVIEW_FORM', '1');
+            && Configuration::updateValue('PSRECAPTCHA_V3_MIN_SCORE', '0.5');
     }
 
     /**
@@ -71,7 +81,7 @@ class PsRecaptcha extends Module
             && Configuration::deleteByName('PSRECAPTCHA_ENABLED')
             && Configuration::deleteByName('PSRECAPTCHA_CONTACT_FORM')
             && Configuration::deleteByName('PSRECAPTCHA_CUSTOMER_FORM')
-            && Configuration::deleteByName('PSRECAPTCHA_REVIEW_FORM')
+            && Configuration::deleteByName('PSRECAPTCHA_V3_MIN_SCORE')
             && parent::uninstall();
     }
 
@@ -91,7 +101,7 @@ class PsRecaptcha extends Module
             $enabled = Tools::getValue('PSRECAPTCHA_ENABLED');
             $contactForm = Tools::getValue('PSRECAPTCHA_CONTACT_FORM');
             $customerForm = Tools::getValue('PSRECAPTCHA_CUSTOMER_FORM');
-            $reviewForm = Tools::getValue('PSRECAPTCHA_REVIEW_FORM');
+            $minScore = Tools::getValue('PSRECAPTCHA_V3_MIN_SCORE');
 
             if (empty($siteKey) || empty($secretKey)) {
                 $output .= $this->displayError($this->l('Site Key and Secret Key are required.'));
@@ -104,7 +114,7 @@ class PsRecaptcha extends Module
                 Configuration::updateValue('PSRECAPTCHA_ENABLED', $enabled);
                 Configuration::updateValue('PSRECAPTCHA_CONTACT_FORM', $contactForm);
                 Configuration::updateValue('PSRECAPTCHA_CUSTOMER_FORM', $customerForm);
-                Configuration::updateValue('PSRECAPTCHA_REVIEW_FORM', $reviewForm);
+                Configuration::updateValue('PSRECAPTCHA_V3_MIN_SCORE', $minScore);
 
                 $output .= $this->displayConfirmation($this->l('Settings updated successfully.'));
             }
@@ -170,7 +180,6 @@ class PsRecaptcha extends Module
                         'options' => [
                             'query' => [
                                 ['id' => 'v2', 'name' => 'reCAPTCHA v2 (Checkbox)'],
-                                ['id' => 'v2_invisible', 'name' => 'reCAPTCHA v2 (Invisible)'],
                                 ['id' => 'v3', 'name' => 'reCAPTCHA v3']
                             ],
                             'id' => 'id',
@@ -206,6 +215,13 @@ class PsRecaptcha extends Module
                         ]
                     ],
                     [
+                        'type' => 'text',
+                        'label' => $this->l('Minimum Score (v3)'),
+                        'name' => 'PSRECAPTCHA_V3_MIN_SCORE',
+                        'size' => 10,
+                        'desc' => $this->l('Minimum score required for reCAPTCHA v3 (0.0 to 1.0, recommended: 0.5)')
+                    ],
+                    [
                         'type' => 'html',
                         'label' => $this->l('Protected Forms'),
                         'name' => 'forms_section',
@@ -231,17 +247,6 @@ class PsRecaptcha extends Module
                         'values' => [
                             ['id' => 'customer_on', 'value' => 1, 'label' => $this->l('Yes')],
                             ['id' => 'customer_off', 'value' => 0, 'label' => $this->l('No')]
-                        ],
-                    ],
-                    [
-                        'type' => 'switch',
-                        'label' => $this->l('Product Review Form'),
-                        'name' => 'PSRECAPTCHA_REVIEW_FORM',
-                        'is_bool' => true,
-                        'desc' => $this->l('Protect product review form'),
-                        'values' => [
-                            ['id' => 'review_on', 'value' => 1, 'label' => $this->l('Yes')],
-                            ['id' => 'review_off', 'value' => 0, 'label' => $this->l('No')]
                         ],
                     ],
                 ],
@@ -272,7 +277,7 @@ class PsRecaptcha extends Module
         $helper->fields_value['PSRECAPTCHA_SIZE'] = Configuration::get('PSRECAPTCHA_SIZE');
         $helper->fields_value['PSRECAPTCHA_CONTACT_FORM'] = Configuration::get('PSRECAPTCHA_CONTACT_FORM');
         $helper->fields_value['PSRECAPTCHA_CUSTOMER_FORM'] = Configuration::get('PSRECAPTCHA_CUSTOMER_FORM');
-        $helper->fields_value['PSRECAPTCHA_REVIEW_FORM'] = Configuration::get('PSRECAPTCHA_REVIEW_FORM');
+        $helper->fields_value['PSRECAPTCHA_V3_MIN_SCORE'] = Configuration::get('PSRECAPTCHA_V3_MIN_SCORE');
 
         return $helper->generateForm([$fieldsForm]);
     }
@@ -399,72 +404,79 @@ class PsRecaptcha extends Module
     public function hookActionContactFormSubmitBefore($params)
     {
         if (!Configuration::get('PSRECAPTCHA_ENABLED') || !Configuration::get('PSRECAPTCHA_CONTACT_FORM')) {
-            return;
+            return true;
         }
 
-        $this->verifyRecaptcha();
+        return $this->validateRecaptcha();
     }
 
     /**
-     * Hook: actionCustomerAccountAdd
+     * Hook: actionSubmitAccountBefore
      * Verify reCAPTCHA on customer registration
      */
-    public function hookActionCustomerAccountAdd($params)
+    public function hookActionSubmitAccountBefore($params)
     {
         if (!Configuration::get('PSRECAPTCHA_ENABLED') || !Configuration::get('PSRECAPTCHA_CUSTOMER_FORM')) {
-            return;
+            return true;
         }
 
-        $this->verifyRecaptcha();
+        return $this->validateRecaptcha();
     }
 
     /**
-     * Verify reCAPTCHA response
+     * Verify reCAPTCHA response using Google's official library
      */
-    protected function verifyRecaptcha()
+    protected function validateRecaptcha()
     {
         $version = Configuration::get('PSRECAPTCHA_VERSION');
         $secretKey = Configuration::get('PSRECAPTCHA_SECRET_KEY');
-
-        if ($version === 'v3') {
-            $recaptchaResponse = Tools::getValue('g-recaptcha-response-v3');
-        } else {
-            $recaptchaResponse = Tools::getValue('g-recaptcha-response');
-        }
+        $recaptchaResponse = Tools::getValue('g-recaptcha-response');
 
         if (empty($recaptchaResponse)) {
-            throw new PrestaShopException($this->l('Please complete the reCAPTCHA verification.'));
+            $this->context->controller->errors[] = $this->l('Please complete the reCAPTCHA verification.');
+            return false;
         }
 
-        $url = 'https://www.google.com/recaptcha/api/siteverify';
-        $data = [
-            'secret' => $secretKey,
-            'response' => $recaptchaResponse,
-            'remoteip' => Tools::getRemoteAddr()
-        ];
-
-        $options = [
-            'http' => [
-                'header' => "Content-type: application/x-www-form-urlencoded\r\n",
-                'method' => 'POST',
-                'content' => http_build_query($data)
-            ]
-        ];
-
-        $context = stream_context_create($options);
-        $result = file_get_contents($url, false, $context);
-        $resultJson = json_decode($result);
-
-        if (!$resultJson->success) {
-            throw new PrestaShopException($this->l('reCAPTCHA verification failed. Please try again.'));
-        }
-
-        // For v3, check score
-        if ($version === 'v3' && isset($resultJson->score)) {
-            $minScore = 0.5; // You can make this configurable
-            if ($resultJson->score < $minScore) {
-                throw new PrestaShopException($this->l('reCAPTCHA score too low. Please try again.'));
+        try {
+            // Fix issue if allow_url_fopen is set to 0 - use cURL instead
+            if (function_exists('ini_get') && !ini_get('allow_url_fopen')) {
+                $recaptchaMethod = new \ReCaptcha\RequestMethod\CurlPost();
+            } else {
+                $recaptchaMethod = null;
             }
+
+            // Create ReCaptcha instance
+            $recaptcha = new ReCaptcha($secretKey, $recaptchaMethod);
+
+            // For v3, set score threshold
+            if ($version === 'v3') {
+                $minScore = (float)Configuration::get('PSRECAPTCHA_V3_MIN_SCORE');
+                $recaptcha->setScoreThreshold($minScore);
+            }
+
+            // Verify the response
+            $result = $recaptcha->verify($recaptchaResponse, Tools::getRemoteAddr());
+
+            if (!$result->isSuccess()) {
+                $errorMessage = $this->l('reCAPTCHA verification failed. Please try again.');
+
+                // For v3, add score information if available
+                if ($version === 'v3' && method_exists($result, 'getScore')) {
+                    $score = $result->getScore();
+                    $minScore = (float)Configuration::get('PSRECAPTCHA_V3_MIN_SCORE');
+                    if ($score < $minScore) {
+                        $errorMessage = $this->l('reCAPTCHA score too low. Please try again.');
+                    }
+                }
+
+                $this->context->controller->errors[] = $errorMessage;
+                return false;
+            }
+
+            return true;
+        } catch (Exception $e) {
+            $this->context->controller->errors[] = $this->l('An error occurred during reCAPTCHA validation.');
+            return false;
         }
     }
 }

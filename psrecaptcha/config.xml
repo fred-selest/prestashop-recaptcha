@@ -2,7 +2,7 @@
 <module>
     <name>psrecaptcha</name>
     <displayName><![CDATA[Google reCAPTCHA]]></displayName>
-    <version><![CDATA[1.0.1]]></version>
+    <version><![CDATA[1.0.3]]></version>
     <description><![CDATA[Protect your store forms with Google reCAPTCHA v2 and v3]]></description>
     <author><![CDATA[Your Name]]></author>
     <tab><![CDATA[front_office_features]]></tab>

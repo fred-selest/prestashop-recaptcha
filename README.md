@@ -125,6 +125,7 @@ Pour toute question ou problème :
 - 🐛 **FIX** : Gestion des erreurs via `$controller->errors[]` au lieu d'exceptions
 - ✅ Support de cURL si allow_url_fopen est désactivé
 - ✅ Gestion du score minimum pour reCAPTCHA v3
+- 🌍 **Traductions natives** : Français et Anglais inclus
 - ✅ Module maintenant 100% fonctionnel sur PrestaShop 8+
 
 ### Version 1.0.2 (2026-01-15)

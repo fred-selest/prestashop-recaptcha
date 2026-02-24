@@ -12,8 +12,9 @@ Thumbs.db
 *.temp
 *~
 
-# ZIP files
+# ZIP files (except dist/ for releases)
 *.zip
+!dist/*.zip
 
 # Node modules (if any)
 node_modules/

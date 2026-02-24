@@ -24,21 +24,29 @@ Module PrestaShop pour intégrer Google reCAPTCHA et protéger vos formulaires c
 
 ## 📦 Installation
 
+### ⚠️ Téléchargement correct
+
+> **Important** : Téléchargez toujours le fichier ZIP depuis le dossier **`dist/`** du dépôt, et non le "Source code" auto-généré par GitHub. Le ZIP source de GitHub a une structure incorrecte pour PrestaShop.
+
+**Lien direct** : [`dist/psrecaptcha-v1.0.3.zip`](dist/psrecaptcha-v1.0.3.zip)
+
+---
+
 ### Méthode 1 : Installation via le Back-Office (Recommandé)
 
-1. Téléchargez le module depuis ce dépôt
-2. Compressez le dossier `psrecaptcha` en fichier ZIP
-3. Dans votre back-office PrestaShop : **Modules** → **Module Manager**
-4. Cliquez sur **Uploader un module**
-5. Sélectionnez le fichier ZIP
-6. Cliquez sur **Configurer**
+1. Téléchargez **[`dist/psrecaptcha-v1.0.3.zip`](dist/psrecaptcha-v1.0.3.zip)** depuis ce dépôt
+2. Dans votre back-office PrestaShop : **Modules** → **Module Manager**
+3. Cliquez sur **Uploader un module**
+4. Sélectionnez le fichier `psrecaptcha-v1.0.3.zip` téléchargé
+5. Cliquez sur **Configurer**
 
 ### Méthode 2 : Installation manuelle via FTP
 
-1. Téléchargez le dossier `psrecaptcha`
-2. Uploadez-le dans `/modules/` de votre installation PrestaShop
-3. Dans votre back-office : **Modules** → **Module Manager**
-4. Recherchez "Google reCAPTCHA" et cliquez sur **Installer**
+1. Téléchargez **[`dist/psrecaptcha-v1.0.3.zip`](dist/psrecaptcha-v1.0.3.zip)**
+2. Décompressez le ZIP — vous obtenez un dossier `psrecaptcha/`
+3. Uploadez ce dossier dans `/modules/` de votre PrestaShop via FTP
+4. Dans votre back-office : **Modules** → **Module Manager**
+5. Recherchez "Google reCAPTCHA" et cliquez sur **Installer**
 
 ## ⚙️ Configuration
 
